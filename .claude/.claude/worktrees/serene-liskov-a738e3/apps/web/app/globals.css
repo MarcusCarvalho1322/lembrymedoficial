@@ -1,0 +1,66 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap');
+
+:root {
+  --bg:   #000000;
+  --bg2:  #0A0A0A;
+  --bg3:  #111111;
+  --bg4:  #1A1A1A;
+  --bg5:  #2A2A2A;
+
+  --cu:   #B87333;
+  --cu2:  #D4A853;
+  --cu3:  #8B5A1E;
+  --cu4:  #D4985A;
+
+  --tx:   #F0EDE8;
+  --txm:  #998E82;
+  --txd:  #5A5248;
+  --txw:  #2A2420;
+
+  --bd:   rgba(184,115,51,.2);
+  --bd2:  rgba(255,255,255,.04);
+  --bd3:  #1F1A15;
+
+  --ok:   #5BB85B;
+  --no:   #C0392B;
+  --warn: #D4A853;
+  --info: #185FA5;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Cormorant Garamond', serif;
+  background: var(--bg);
+  color: var(--tx);
+  overflow-x: hidden;
+}
+
+.cinzel { font-family: 'Cinzel', serif; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg2); }
+::-webkit-scrollbar-thumb { background: var(--bd3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--cu3); }
+
+/* Animações */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+@keyframes shimmer {
+  from { background-position: -400px 0; }
+  to   { background-position: 400px 0; }
+}
+
+.fade { animation: fadeIn .35s ease; }
+
+.skeleton {
+  background: linear-gradient(90deg, var(--bg3) 25%, var(--bg4) 50%, var(--bg3) 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 6px;
+}

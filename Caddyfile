@@ -1,0 +1,55 @@
+# ═══════════════════════════════════════════════════════════
+# LEMBRYMED — Caddyfile (Reverse Proxy + SSL Automático)
+# ═══════════════════════════════════════════════════════════
+# SSL: Let's Encrypt automático via Caddy (renovação a cada 90 dias)
+# Headers de segurança: HSTS, CSP, X-Frame-Options, etc.
+# ═══════════════════════════════════════════════════════════
+
+lembrymed.com.br, www.lembrymed.com.br {
+  # ── Security headers ──────────────────────────────────────
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    X-Content-Type-Options "nosniff"
+    X-Frame-Options "DENY"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    X-XSS-Protection "0"
+    -Server
+  }
+
+  # ── API (webhooks + admin + health) ────────────────────────
+  handle /webhook/* {
+    reverse_proxy api:3000
+  }
+  handle /health {
+    reverse_proxy api:3000
+  }
+  handle /metrics {
+    reverse_proxy api:3000
+  }
+  handle /admin/login {
+    reverse_proxy api:3000
+  }
+
+  # ── Frontend (landing, admin UI, checkout, páginas legais) ──
+  handle {
+    reverse_proxy web:3000
+  }
+
+  # ── Logs ──────────────────────────────────────────────────
+  log {
+    output file /var/log/caddy/access.log {
+      roll_size 10mb
+      roll_keep 5
+    }
+  }
+}
+
+# Subdomínio opcional para API dedicada
+api.lembrymed.com.br {
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    X-Content-Type-Options "nosniff"
+    -Server
+  }
+  reverse_proxy api:3000
+}

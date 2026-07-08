@@ -1,0 +1,76 @@
+# CI — workflow sugerido
+#
+# Este conteúdo estava em `.github/workflows/ci.yml` durante a Onda 4 da
+# auditoria, mas precisou ser removido do push porque o PAT usado não
+# tinha escopo `workflow`. Para ativar o CI manualmente:
+#
+#   1. GitHub UI → Actions → New workflow → set up a workflow yourself
+#   2. Colar o conteúdo abaixo
+#   3. Commit diretamente na main ou em branch separada
+#
+# Ou via CLI com PAT de escopo workflow:
+#   mkdir -p .github/workflows
+#   cp AUDIT/CI-SUGGESTED.yml .github/workflows/ci.yml
+#   git add + commit + push
+#
+# Antes de ativar, confirmar que as env vars dummy funcionam no CI da
+# GitHub Actions — há um stub em cada `env:` abaixo.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build + Typecheck + Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: TypeScript check (API)
+        working-directory: apps/api
+        run: npx tsc --noEmit
+        env:
+          DATABASE_URL: postgres://user:pass@localhost:5432/lembrymed_test
+          REDIS_URL: redis://localhost:6379
+          STRIPE_SECRET_KEY: sk_test_dummy
+          STRIPE_WEBHOOK_SECRET: whsec_dummy
+          STRIPE_PRICE_ANNUAL: price_dummy
+          ANTHROPIC_API_KEY: sk-ant-dummy
+          ADMIN_EMAIL: ci@example.com
+          ADMIN_PASSWORD_HASH: $2a$12$CIdummyCIdummyCIdummyCIdummyCIdummyCIdummyCIdummy
+          NEXTAUTH_SECRET: ci-test-secret-chave-minima-32-chars-ok
+          WEB_URL: https://example.com
+          ZAPI_INSTANCE_ID: test
+          ZAPI_TOKEN: test
+          ZAPI_WEBHOOK_TOKEN: ci-test-webhook-token-16+chars
+          NODE_ENV: test
+
+      - name: Build Next.js (web)
+        working-directory: apps/web
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: https://api.example.com
+          STRIPE_SECRET_KEY: sk_test_dummy
+          STRIPE_PRICE_ANNUAL: price_dummy
+
+      - name: Unit tests (API + shared)
+        working-directory: apps/api
+        run: npm test

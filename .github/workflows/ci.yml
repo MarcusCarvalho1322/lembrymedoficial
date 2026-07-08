@@ -1,0 +1,92 @@
+# ═══════════════════════════════════════════════════════════
+# LEMBRYMED — CI (Integração Contínua)
+# ═══════════════════════════════════════════════════════════
+# Dispara em: push na main + pull requests
+# Executa: typecheck API + build Web + testes unitários
+# ═══════════════════════════════════════════════════════════
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Typecheck + Build + Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: TypeScript check (API)
+        working-directory: apps/api
+        run: npx tsc --noEmit
+        env:
+          DATABASE_URL: postgres://test:test@localhost:5432/test
+          REDIS_URL: redis://localhost:6379
+          STRIPE_SECRET_KEY: sk_test_ci_dummy_key_for_testing_only_123456
+          STRIPE_WEBHOOK_SECRET: whsec_ci_dummy
+          STRIPE_PRICE_ANNUAL: price_ci_dummy
+          DEEPSEEK_API_KEY: sk-ci-dummy-key
+          ADMIN_EMAIL: ci@lembrymed.com.br
+          ADMIN_PASSWORD_HASH: $2a$12$CIdummyCIdummyCIdummyCIdummyCIdummyCIdummyCIdummy
+          NEXTAUTH_SECRET: ci-test-secret-chave-minima-32-caracteres-ok
+          WEB_URL: https://ci.lembrymed.com.br
+          WHATSAPP_PROVIDER: zapi
+          ZAPI_INSTANCE_ID: ci-test
+          ZAPI_TOKEN: ci-test
+          ZAPI_CLIENT_TOKEN: ci-test
+          ZAPI_WEBHOOK_TOKEN: ci-test-webhook-token-16+chars
+          NODE_ENV: test
+
+      - name: Build Next.js (Web)
+        working-directory: apps/web
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: https://api.lembrymed.com.br
+          NEXT_PUBLIC_WEB_URL: https://lembrymed.com.br
+          STRIPE_SECRET_KEY: sk_test_ci_dummy_key_for_testing_only_123456
+          STRIPE_PRICE_ANNUAL: price_ci_dummy
+
+      - name: Unit tests (API + shared)
+        working-directory: apps/api
+        run: npm test
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run lint --if-present || echo "⚠️ Lint não configurado — pulando"

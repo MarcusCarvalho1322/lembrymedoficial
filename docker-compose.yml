@@ -1,0 +1,117 @@
+# ═══════════════════════════════════════════════════════════
+# LEMBRYMED — Docker Compose (Desenvolvimento Local)
+# ═══════════════════════════════════════════════════════════
+# Uso: docker compose up -d
+# Para: desenvolvimento local com hot-reload, sem depender de
+#       serviços externos (Neon, Railway, Vercel).
+# ═══════════════════════════════════════════════════════════
+
+services:
+  # ── Banco de Dados PostgreSQL ──────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: lembrymed-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: lembrymed
+      POSTGRES_PASSWORD: lembrymed_dev
+      POSTGRES_DB: lembrymed
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lembrymed -d lembrymed"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis (BullMQ + cache) ─────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: lembrymed-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── API Express + Workers BullMQ ───────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: dev
+    container_name: lembrymed-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgresql://lembrymed:lembrymed_dev@postgres:5432/lembrymed
+      DATABASE_URL_UNPOOLED: postgresql://lembrymed:lembrymed_dev@postgres:5432/lembrymed
+      REDIS_URL: redis://redis:6379
+      LLM_PROVIDER: deepseek
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-sk-dev-placeholder}
+      DEEPSEEK_BASE_URL: https://api.deepseek.com
+      WHATSAPP_PROVIDER: zapi
+      ZAPI_INSTANCE_ID: ${ZAPI_INSTANCE_ID:-dev}
+      ZAPI_TOKEN: ${ZAPI_TOKEN:-dev}
+      ZAPI_CLIENT_TOKEN: ${ZAPI_CLIENT_TOKEN:-dev}
+      ZAPI_WEBHOOK_TOKEN: dev-webhook-token-16-chars-min
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_dummy}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_dummy}
+      STRIPE_PRICE_ANNUAL: ${STRIPE_PRICE_ANNUAL:-price_dummy}
+      WEB_URL: http://localhost:3001
+      ADMIN_EMAIL: admin@lembrymed.com.br
+      ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH:-$2a$12$devhashplaceholderdevhashplaceholder}
+      NEXTAUTH_SECRET: dev-secret-minimum-32-characters-long-key
+      LOG_LEVEL: debug
+      PORT: "3000"
+    volumes:
+      - ./packages:/app/packages:ro
+      - ./apps/api/src:/app/apps/api/src:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: >
+      sh -c "npx drizzle-kit push --config packages/database/drizzle.config.ts &&
+             npx tsx watch apps/api/src/index.ts"
+
+  # ── Web Next.js (Landing + Admin) ──────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: dev
+    container_name: lembrymed-web
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:3000
+      NEXT_PUBLIC_WEB_URL: http://localhost:3001
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_dummy}
+      STRIPE_PRICE_ANNUAL: ${STRIPE_PRICE_ANNUAL:-price_dummy}
+    volumes:
+      - ./packages:/app/packages:ro
+      - ./apps/web:/app/apps/web:ro
+      - /app/apps/web/node_modules
+      - /app/apps/web/.next
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
+    driver: local
+  redisdata:
+    driver: local

@@ -1,0 +1,110 @@
+# ═══════════════════════════════════════════════════════════
+# LEMBRYMED — CD (Deploy Contínuo para VPS)
+# ═══════════════════════════════════════════════════════════
+# Dispara em: push na main (após CI passar)
+# Executa: SSH na VPS → git pull → docker compose up -d
+# ═══════════════════════════════════════════════════════════
+
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:  # permite deploy manual pelo GitHub UI
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+            set -e  # para no primeiro erro
+
+            echo "📦 Deploy Lembrymed — $(date)"
+
+            cd /opt/lembrymed
+
+            # Backup rápido do .env antes de qualquer coisa
+            cp .env .env.backup.$(date +%Y%m%d_%H%M%S)
+
+            # Pull do branch main
+            git fetch origin main
+            git checkout main
+            git pull origin main
+
+            # Build + restart dos containers
+            docker compose -f docker-compose.prod.yml build --pull
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+
+            # Limpar imagens antigas (libera disco)
+            docker image prune -f --filter "until=24h"
+
+            # Healthcheck
+            echo "⏳ Aguardando healthcheck..."
+            sleep 10
+
+            if curl -fSs http://localhost:3000/health > /dev/null 2>&1; then
+              echo "✅ Deploy OK — API saudável"
+            else
+              echo "❌ Healthcheck falhou! Verificar logs."
+              docker compose -f docker-compose.prod.yml logs --tail=50 api
+              exit 1
+            fi
+
+            echo "✅ Deploy concluído com sucesso"
+
+  # ═══════════════════════════════════════════════════════════
+  # Rollback job (disparo manual via workflow_dispatch)
+  # Uso: GitHub UI → Actions → Rollback → Run workflow
+  # ═══════════════════════════════════════════════════════════
+  rollback:
+    name: Rollback (manual)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event_name == 'workflow_dispatch'
+    needs: []  # não depende do deploy
+
+    steps:
+      - name: Rollback via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+            set -e
+            echo "🔄 Rollback Lembrymed — $(date)"
+            cd /opt/lembrymed
+
+            # Restaurar .env do backup mais recente
+            LATEST_BACKUP=$(ls -t .env.backup.* 2>/dev/null | head -1)
+            if [ -n "$LATEST_BACKUP" ]; then
+              cp "$LATEST_BACKUP" .env
+              echo "📄 .env restaurado de $LATEST_BACKUP"
+            fi
+
+            # Voltar 1 commit
+            git reset --hard HEAD~1
+
+            # Rebuild + restart
+            docker compose -f docker-compose.prod.yml build
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+
+            sleep 10
+            if curl -fSs http://localhost:3000/health > /dev/null 2>&1; then
+              echo "✅ Rollback OK"
+            else
+              echo "❌ Rollback falhou! Intervenção manual necessária."
+              exit 1
+            fi

@@ -1,0 +1,33 @@
+{
+  "name": "lembrymed",
+  "version": "2.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "dev:api": "npm run dev -w apps/api",
+    "dev:web": "npm run dev -w apps/web",
+    "build": "turbo build",
+    "db:push": "npm run db:push -w packages/database",
+    "db:generate": "npm run db:generate -w packages/database",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test"
+  },
+  "devDependencies": {
+    "next": "^15.5.16",
+    "react": "^18.3.0 || ^19.0.0",
+    "react-dom": "^18.3.0 || ^19.0.0",
+    "turbo": "^2.0.0",
+    "typescript": "^5.5.0"
+  },
+  "overrides": {
+    "esbuild": "0.25.8"
+  },
+  "dependencies": {
+    "csstype": "^3.1.3"
+  }
+}

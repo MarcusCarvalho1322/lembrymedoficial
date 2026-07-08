@@ -1,0 +1,30 @@
+node_modules/
+dist/
+.next/
+.env
+.env.local
+.env.production
+.env.backup.*
+.turbo/
+coverage/
+*.log
+.vercel
+# Docker
+caddy_data/
+caddy_config/
+redisdata/
+pgdata/
+# Backups
+data/backups/
+# Segredos
+*.pem
+*.key
+credentials.json
+service-account.json
+# Sistema
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
