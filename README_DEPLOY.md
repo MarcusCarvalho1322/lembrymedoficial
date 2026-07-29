@@ -59,7 +59,7 @@ docker --version
 Na VPS:
 ```bash
 cd /opt
-git clone https://github.com/MarcusCarvalho1322/lembrymed.git lembrymed
+git clone https://github.com/MarcusCarvalho1322/lembrymedoficial.git lembrymed
 cd lembrymed
 ```
 
