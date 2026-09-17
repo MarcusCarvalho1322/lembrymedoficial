@@ -1,9 +1,0 @@
-[build]
-builder = "dockerfile"
-dockerfilePath = "apps/api/Dockerfile"
-# cache-bust-2026-04-22T19:35 — força Railway re-resolver
-
-[deploy]
-healthcheckPath = "/health"
-healthcheckTimeout = 100
-restartPolicyType = "always"

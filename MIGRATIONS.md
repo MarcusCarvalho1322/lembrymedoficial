@@ -7,7 +7,8 @@ Política e procedimentos para gerenciar mudanças no schema do banco de dados.
 ## Stack
 
 - **ORM:** Drizzle ORM v0.45.2
-- **Banco:** Neon PostgreSQL Serverless (gerenciado)
+- **Driver:** `pg` (node-postgres) — conexões TCP
+- **Banco:** PostgreSQL 16 self-hosted (container Docker na VPS)
 - **Migrations:** SQL gerado pelo `drizzle-kit generate`, versionado no git
 
 ---
@@ -24,11 +25,11 @@ Política e procedimentos para gerenciar mudanças no schema do banco de dados.
 
 ## Fluxo seguro
 
-### 1. Criar branch de preview no Neon
+### 1. Fazer backup antes
 
 ```bash
-# Via painel Neon: Branches → Create Branch → nome: preview/nova-feature
-# Isso cria uma cópia isolada do banco para testar
+# Antes de qualquer migration em produção:
+./scripts/backup.sh
 ```
 
 ### 2. Gerar migration
@@ -48,32 +49,31 @@ Abra o arquivo e verifique:
 - [ ] Índices novos não duplicam existentes
 - [ ] Constraints FOREIGN KEY com ON DELETE apropriado
 
-### 4. Testar no branch preview
+### 4. Testar em staging (ou banco local)
 
 ```bash
-# Conectar ao branch preview
-DATABASE_URL_UNPOOLED="postgres://...preview-url..." \
+# Com o compose de dev rodando:
+DATABASE_URL="postgresql://lembrymed:lembrymed_dev@localhost:5432/lembrymed" \
   npm --workspace packages/database run db:push
 ```
 
-### 5. Validar
-
-- Rodar API contra o branch preview
-- Testar queries que usam as novas colunas/tabelas
-- Verificar que migrations pendentes não quebram
-
-### 6. Aplicar em produção
+### 5. Aplicar em produção
 
 ```bash
-# Sempre em horário de baixo tráfego (madrugada)
-DATABASE_URL_UNPOOLED="postgres://...prod-url..." \
-  npm --workspace packages/database run db:push
+# Dentro do container API:
+docker compose -f docker-compose.prod.yml exec api \
+  npx tsx packages/database/apply-migration.ts packages/database/migrations/000X_nome.sql
+
+# Ou aplicar TODAS pendentes via drizzle-kit push:
+docker compose -f docker-compose.prod.yml exec api \
+  sh -c 'DATABASE_URL_UNPOOLED=$DATABASE_URL npx drizzle-kit push --config packages/database/drizzle.config.ts'
 ```
 
-### 7. Limpar
+### 6. Verificar
 
-- Deletar branch preview no Neon
-- Commit + push da migration
+```bash
+docker compose -f docker-compose.prod.yml exec postgres psql -U lembrymed -d lembrymed -c '\dt'
+```
 
 ---
 
@@ -81,12 +81,12 @@ DATABASE_URL_UNPOOLED="postgres://...prod-url..." \
 
 | # | Arquivo | Status |
 |---|---------|--------|
-| 0001 | `onboarding_nudge_count.sql` | ✅ Produção |
-| 0002 | `cascade_and_lgpd_tables.sql` | ⚠️ Pendente (PR #4) |
-| 0003 | `drop_legacy_prisma_fks.sql` | 🧪 Dev |
-| 0004 | `reminder_type_enum_migration.sql` | 🧪 Dev |
-| 0005 | `medications_deactivated_reason.sql` | 🧪 Dev |
-| 0006 | `patients_interaction_mode.sql` | 🧪 Dev |
+| 0001 | `onboarding_nudge_count.sql` | ✅ Aplicada |
+| 0002 | `cascade_and_lgpd_tables.sql` | ✅ Aplicada |
+| 0003 | `drop_legacy_prisma_fks.sql` | ✅ Aplicada |
+| 0004 | `reminder_type_enum_migration.sql` | ✅ Aplicada |
+| 0005 | `medications_deactivated_reason.sql` | ✅ Aplicada |
+| 0006 | `patients_interaction_mode.sql` | ✅ Aplicada |
 
 ---
 
@@ -100,6 +100,11 @@ ALTER TABLE patients DROP COLUMN IF EXISTS interaction_mode;
 ```
 
 NUNCA delete arquivos de migration já aplicados em produção.
+Para rollback de emergência, use o backup:
+
+```bash
+./scripts/restore.sh /opt/lembrymed/data/backups/lembrymed_ULTIMO.dump.gz
+```
 
 ---
 
@@ -115,6 +120,6 @@ npm run db:push
 # Ver schema atual no banco (Studio)
 npm --workspace packages/database run db:studio
 
-# Conectar ao banco via psql
-psql "$DATABASE_URL_UNPOOLED"
+# Conectar ao banco via psql (dentro do container)
+docker compose exec postgres psql -U lembrymed -d lembrymed
 ```

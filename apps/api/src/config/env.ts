@@ -22,8 +22,9 @@ const requiredInProd = (min = 1) =>
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
 
-  // ── Banco de dados ────────────────────────────────────────────────────────
+  // ── Banco de dados (PostgreSQL self-hosted em container Docker) ───────────
   DATABASE_URL: z.string().url(),
+  /** Usado apenas pelo drizzle-kit (migrations). Opcional — usa DATABASE_URL se ausente. */
   DATABASE_URL_UNPOOLED: z.string().url().optional(),
 
   // ── Redis (BullMQ + dedup webhook) ────────────────────────────────────────
@@ -111,7 +112,7 @@ function parseEnv(): Env {
         '│ ❌ Configuração inválida de variáveis de ambiente         │\n' +
         '╰───────────────────────────────────────────────────────────╯\n' +
         msgs.join('\n') +
-        '\n\nVerifique seu .env (ou as env vars do Railway/Vercel).\n',
+        '\n\nVerifique seu .env (ou as env vars do Docker Compose).\n',
     );
     // Em produção: interrompe o boot. Em dev: também interrompe (fail fast).
     process.exit(1);

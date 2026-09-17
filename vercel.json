@@ -1,5 +1,0 @@
-{
-  "buildCommand": "npm --workspace=@lembrymed/web run build",
-  "outputDirectory": "apps/web/.next",
-  "installCommand": "npm install"
-}

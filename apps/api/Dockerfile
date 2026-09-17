@@ -37,7 +37,7 @@ RUN node_modules/.bin/esbuild apps/api/src/index.ts \
     --target=node20 \
     --outfile=apps/api/dist/server.js \
     --external:ioredis \
-    --external:@neondatabase/serverless \
+    --external:pg \
     --external:bcryptjs \
     --external:node-cron \
     --external:semver \

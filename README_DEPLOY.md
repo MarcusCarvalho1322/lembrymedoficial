@@ -8,11 +8,12 @@ Guia passo a passo para colocar o Lembrymed no ar em uma VPS. Não requer conhec
 
 - [ ] Uma VPS contratada (recomendado: Hetzner CX22 ~R$25/mês)
 - [ ] Domínio `lembrymed.com.br` configurado (DNS apontando para IP da VPS)
-- [ ] Acesso ao painel do Neon (banco de dados)
 - [ ] Acesso ao painel da Z-API (WhatsApp)
 - [ ] Acesso ao painel do Stripe (pagamentos)
 - [ ] Acesso ao painel do DeepSeek (IA) — https://platform.deepseek.com
 - [ ] Acesso ao GitHub (repositório do código)
+
+> 💡 O banco de dados (PostgreSQL) roda como container Docker na própria VPS — não precisa de painel externo.
 
 ---
 
@@ -59,7 +60,7 @@ docker --version
 Na VPS:
 ```bash
 cd /opt
-git clone https://github.com/MarcusCarvalho1322/lembrymedoficial.git lembrymed
+git clone https://github.com/MarcusCarvalho1322/lembrymed.git lembrymed
 cd lembrymed
 ```
 
@@ -79,9 +80,10 @@ Copie e cole o conteúdo abaixo, substituindo os valores pelos reais:
 NODE_ENV=production
 PORT=3000
 
-# Banco de dados (Neon)
-DATABASE_URL=postgresql://...    # Copie do painel Neon
-DATABASE_URL_UNPOOLED=postgresql://...  # Copie do painel Neon
+# Banco de dados (PostgreSQL — roda na própria VPS)
+POSTGRES_USER=lembrymed
+POSTGRES_PASSWORD=senha-forte-aqui      # INVENTE uma senha forte
+POSTGRES_DB=lembrymed
 
 # LLM (DeepSeek V3)
 LLM_PROVIDER=deepseek

@@ -16,7 +16,7 @@ Operado por [BIZZ.IA Intelligence Ecosystem](https://bizzia.com.br) · Sinop/MT 
 |-------------------------------|-------------------------------------------------------------|
 | Frontend/Landing              | Next.js 14 (App Router) em Docker (VPS)                     |
 | Backend / API / Workers       | Express + BullMQ + node-cron em Docker (VPS)                |
-| Banco                         | Neon PostgreSQL serverless + Drizzle ORM                    |
+| Banco                         | PostgreSQL 16 (container Docker) + Drizzle ORM            |
 | Fila                          | Redis (container Docker) via BullMQ                         |
 | WhatsApp Business             | Z-API (com fallback interno para 360dialog/Meta/Twilio)     |
 | IA — conversação              | DeepSeek V3 (recomendado) + Anthropic Claude (fallback)     |
@@ -78,7 +78,7 @@ cp .env.example .env
 # Preencha com suas chaves. Obrigatórias:
 #   LLM_PROVIDER=deepseek
 #   DEEPSEEK_API_KEY (https://platform.deepseek.com)
-#   DATABASE_URL, DATABASE_URL_UNPOOLED (Neon)
+#   POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB (banco local)
 #   ZAPI_INSTANCE_ID, ZAPI_TOKEN, ZAPI_CLIENT_TOKEN (Z-API)
 #   STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PRICE_ANNUAL
 #   ADMIN_EMAIL, ADMIN_PASSWORD_HASH, NEXTAUTH_SECRET

@@ -1,6 +1,6 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════
-# LEMBRYMED — Backup do Banco de Dados (Neon → arquivo + S3)
+# LEMBRYMED — Backup do Banco de Dados (PostgreSQL container)
 # ═══════════════════════════════════════════════════════════
 # Uso: ./scripts/backup.sh
 # Cron: 0 3 * * * /opt/lembrymed/scripts/backup.sh
@@ -12,32 +12,29 @@ TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 BACKUP_DIR="${BACKUP_DIR:-/opt/lembrymed/data/backups}"
 RETENTION_DAYS="${RETENTION_DAYS:-30}"
 LOG_FILE="/var/log/lembrymed-backup.log"
+CONTAINER="${POSTGRES_CONTAINER:-lembrymed-postgres}"
 
 # Carregar .env se existir
 if [ -f /opt/lembrymed/.env ]; then
   export $(grep -v '^#' /opt/lembrymed/.env | grep -v '^$' | xargs)
 fi
 
-# Verificar variáveis obrigatórias
-if [ -z "${DATABASE_URL_UNPOOLED:-}" ]; then
-  echo "[$(date)] ❌ DATABASE_URL_UNPOOLED não definida" | tee -a "$LOG_FILE"
-  exit 1
-fi
+PGUSER="${POSTGRES_USER:-lembrymed}"
+PGDB="${POSTGRES_DB:-lembrymed}"
 
 mkdir -p "$BACKUP_DIR"
 
 echo "[$(date)] 📦 Iniciando backup do banco Lembrymed..." | tee -a "$LOG_FILE"
 
-# Dump do Neon PostgreSQL
 DUMP_FILE="$BACKUP_DIR/lembrymed_$TIMESTAMP.dump"
 
-if pg_dump "$DATABASE_URL_UNPOOLED" \
+# Dump via docker exec no container postgres
+if docker exec "$CONTAINER" pg_dump -U "$PGUSER" -d "$PGDB" \
   --format=custom \
   --no-owner \
   --no-acl \
-  --file="$DUMP_FILE" 2>>"$LOG_FILE"; then
+  > "$DUMP_FILE" 2>>"$LOG_FILE"; then
 
-  # Comprimir
   gzip -f "$DUMP_FILE"
   DUMP_SIZE=$(du -h "$DUMP_FILE.gz" | cut -f1)
   echo "[$(date)] ✅ Backup concluído: $DUMP_FILE.gz ($DUMP_SIZE)" | tee -a "$LOG_FILE"
