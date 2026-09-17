@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
       success_url: `${webUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${webUrl}/checkout?canceled=1`,
       locale: 'pt-BR',
-      payment_method_types: ['card', 'boleto'],
+      payment_method_types: ['card', 'boleto', 'pix'],
       billing_address_collection: 'required',
       allow_promotion_codes: true,
     });

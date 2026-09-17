@@ -24,7 +24,7 @@ export async function createPaymentLink(
     success_url: `${env.WEB_URL}/success?renewed=1`,
     cancel_url: `${env.WEB_URL}/?canceled=1`,
     locale: 'pt-BR',
-    payment_method_types: ['card'],
+    payment_method_types: ['card', 'boleto', 'pix'],
   });
 
   return { url: session.url! };
