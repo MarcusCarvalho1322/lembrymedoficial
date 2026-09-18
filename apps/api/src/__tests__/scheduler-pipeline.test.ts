@@ -2,7 +2,7 @@
  * @suite Scheduler pipeline — integration-style
  *
  * Mocka med-schedule-cache e queues para exercitar runSchedulerTick():
- * seleção de medicamentos ativos, detecção de janela (T-10/T-0/T+10),
+ * seleção de medicamentos ativos, detecção de janela (T-0/T+10),
  * dedup, e enfileiramento com jobId determinístico.
  */
 
@@ -81,20 +81,15 @@ function medRow(overrides: Record<string, string> = {}) {
 }
 
 describe('runSchedulerTick', () => {
-  it('enfileira T-10 quando faltam 10 minutos', async () => {
+  it('não enfileira T-10 (régua de 2 mensagens — produto)', async () => {
     nowBRTMock.mockReturnValue(brtAt(8, 0));
-    getActiveMedsMock.mockResolvedValue([medRow()]);
+    getActiveMedsMock.mockResolvedValue([medRow()]); // med às 08:10 → diff +10
 
     const runTick = await loadRunTick();
     const result = await runTick();
 
-    expect(result.enqueued).toBe(1);
-    expect(queueAddMock).toHaveBeenCalledOnce();
-    const [jobId, jobData, opts] = queueAddMock.mock.calls[0];
-    expect(jobData.reminder_type).toBe('t_minus_10');
-    expect(jobData.medication_time).toBe('08:10');
-    expect(jobId).toContain('08:10');
-    expect(opts.jobId).toBe(jobId);
+    expect(result.enqueued).toBe(0);
+    expect(queueAddMock).not.toHaveBeenCalled();
   });
 
   it('enfileira T-0 (na hora exata)', async () => {
@@ -151,9 +146,9 @@ describe('runSchedulerTick', () => {
       { patient_id: 'p1', patient_name: 'A', patient_phone: '5511111111111',
         medication_id: 'm1', med_name: 'X', dosage: '10mg', med_time: '08:00' },
       { patient_id: 'p1', patient_name: 'A', patient_phone: '5511111111111',
-        medication_id: 'm2', med_name: 'Y', dosage: '20mg', med_time: '08:10' },
+        medication_id: 'm2', med_name: 'Y', dosage: '20mg', med_time: '08:00' },
       { patient_id: 'p2', patient_name: 'B', patient_phone: '5522222222222',
-        medication_id: 'm3', med_name: 'Z', dosage: '30mg', med_time: '08:10' },
+        medication_id: 'm3', med_name: 'Z', dosage: '30mg', med_time: '08:00' },
       { patient_id: 'p2', patient_name: 'B', patient_phone: '5522222222222',
         medication_id: 'm4', med_name: 'W', dosage: '40mg', med_time: '09:30' }, // fora da janela
     ]);

@@ -19,7 +19,7 @@ import {
 
 describe('REMINDER_TEMPLATES', () => {
 
-  describe('t_minus_10 — aviso 10 min antes', () => {
+  describe('t_minus_10 — legado (mantido para jobs em voo, não é mais disparado)', () => {
     it('contém nome e dosagem do medicamento', () => {
       const msg = REMINDER_TEMPLATES.t_minus_10('Metformina', '500mg');
       expect(msg).toContain('Metformina');

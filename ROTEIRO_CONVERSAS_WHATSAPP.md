@@ -12,7 +12,7 @@
 2. Onboarding — Etapa 1: Medicamentos
 3. Onboarding — Etapa 2: Familiar (opcional)
 4. Ativação
-5. Lembretes diários (T-10 / T=0 / T+10)
+5. Lembretes diários (T=0 / T+10)
 6. Confirmação SIM/NÃO
 7. Alerta ao familiar
 8. Fluxos especiais (renovação, LGPD, relatório mensal, nudges)
@@ -44,7 +44,7 @@
 
 > 🧓 **Maria**: Tomo losartana 50mg de manhã, metformina 500mg no almoço e no jantar, e sinvastatina 20mg à noite.
 
-> 🤖 **Lembrymed**:
+> **Lembrymed**:
 > Perfeito, Maria! Vou organizar seus lembretes assim:
 >
 > 💊 Losartana 50mg — 08:00
@@ -60,7 +60,7 @@
 
 > 🧓 **Maria**: Tomo losartana e metformina.
 
-> 🤖 **Lembrymed**:
+> **Lembrymed**:
 > Ótimo! Em quais horários você costuma tomar cada um? 🕐
 
 ### 2.3 Paciente manda foto da receita
@@ -69,7 +69,7 @@
 
 > 🧓 **Maria**: *[envia foto da receita]*
 
-> 🤖 **Lembrymed**:
+> **Lembrymed**:
 > Vi na sua receita: Losartana 50mg e Metformina 500mg. Em quais horários você costuma tomar cada um? 🕐
 
 ---
@@ -78,7 +78,7 @@
 
 *Depois dos medicamentos confirmados, na MESMA conversa.*
 
-> 🤖 **Lembrymed**:
+> **Lembrymed**:
 > Perfeito, Maria! Seus medicamentos estão cadastrados. ✅
 >
 > Deseja cadastrar um contato familiar que receberá um aviso caso você esqueça de confirmar que tomou seu medicamento? É opcional — basta me enviar o nome e o número de WhatsApp. 👨‍👩‍👧
@@ -87,21 +87,21 @@
 
 > 🧓 **Maria**: Sim! Minha filha Ana, 11 98888-7777
 
-> 🤖 **Lembrymed**:
+> **Lembrymed**:
 > Combinado! Sua filha Ana vai receber um aviso caso você não confirme uma medicação. Tudo pronto! 💙
 
 ### 3.2 Paciente não quer familiar
 
 > 🧓 **Maria**: Agora não, obrigada.
 
-> 🤖 **Lembrymed**:
+> **Lembrymed**:
 > Sem problema! Você pode adicionar um familiar quando quiser. Está tudo pronto! 😊
 
 ### 3.3 Paciente tenta cadastrar o PRÓPRIO número (bloqueio de segurança)
 
 > 🧓 **Maria**: Pode colocar meu próprio número mesmo.
 
-> 🤖 **Lembrymed**:
+> **Lembrymed**:
 > Pelas nossas diretrizes de uso, não é permitido usar o seu próprio número como contato familiar — a notificação precisa chegar a outra pessoa. 😊 Você pode deixar esse campo em aberto e adicionar um familiar quando decidir!
 
 ---
@@ -110,7 +110,7 @@
 
 *Mensagem final do onboarding. A partir daqui os lembretes começam no próximo horário de dose.*
 
-> 🤖 **Lembrymed**:
+> **Lembrymed**:
 > Tudo pronto, Maria! 🎉
 >
 > A partir de agora eu te lembro dos seus medicamentos todos os dias no WhatsApp.
@@ -121,21 +121,16 @@
 
 ## 5. LEMBRETES DIÁRIOS (RÉGUA DE DISPARO)
 
-*Sistema de 3 mensagens por dose. Horários sempre no fuso de Brasília.*
+*Sistema de 2 mensagens por dose. Horários sempre no fuso de Brasília.*
 
-### 5.1 T-10 (10 minutos antes)
+### 5.1 T=0 (na hora exata)
 
-> 🤖 **Lembrymed**:
-> ⏰ Daqui 10 minutos é hora de tomar sua Losartana (08:00). Prepare-se! 💊
-
-### 5.2 T=0 (na hora exata)
-
-> 🤖 **Lembrymed**:
+> **Lembrymed**:
 > 💊 São 08:00 — hora de tomar sua Losartana!
 
-### 5.3 T+10 (10 minutos depois — pedido de confirmação)
+### 5.2 T+10 (10 minutos depois — pedido de confirmação)
 
-> 🤖 **Lembrymed**:
+> **Lembrymed**:
 > Você tomou sua Losartana?
 > Responda SIM ou NÃO 💊
 
@@ -156,7 +151,7 @@
 
 > 🧓 **Maria**: SIM
 
-> 🤖 **Lembrymed**:
+> **Lembrymed**:
 > Ótimo, registrado às 08:05! Continue assim! 💙
 >
 > *Se a paciente tomar vários remédios no mesmo horário, um SIM vale para todos daquele horário.*
@@ -165,7 +160,7 @@
 
 > 🧓 **Maria**: NÃO
 
-> 🤖 **Lembrymed**: *(sem resposta imediata — o sistema registra a recusa)*
+> **Lembrymed**: *(sem resposta imediata — o sistema registra a recusa)*
 
 *Se não houver confirmação em 30 minutos, dispara o alerta familiar (seção 7).*
 
@@ -188,7 +183,7 @@
 
 > 🧓 **Maria**: O médico mudou minha receita, quero atualizar os remédios.
 
-> 🤖 **Lembrymed**:
+> **Lembrymed**:
 > Para atualizar seus medicamentos, precisarei recadastrar a lista completa, Maria! 📋
 >
 > Seus medicamentos atuais são:
@@ -206,7 +201,7 @@
 
 > 🧓 **Maria**: EXCLUIR MEUS DADOS
 
-> 🤖 **Lembrymed**:
+> **Lembrymed**:
 > Entendi! Recebemos seu pedido de exclusão de dados. 📝
 >
 > Por segurança, você tem 24 horas para cancelar — basta enviar CANCELAR.
@@ -215,12 +210,12 @@
 
 ### 8.3 Renovação de assinatura (vencimento em 30/15/3 dias)
 
-> 🤖 **Lembrymed**:
+> **Lembrymed**:
 > Olá, Maria! 😊 Sua assinatura do Lembrymed vence em 15 dias. Para não interromper seus lembretes, acesse o link de renovação que te enviei. 💊
 
 *Após o pagamento da renovação:*
 
-> 🤖 **Lembrymed**:
+> **Lembrymed**:
 > Maria, que ótimo! 🎉 Sua assinatura do *Lembrymed* foi renovada com sucesso!
 >
 > Seus lembretes de medicamentos voltam a funcionar agora. ✅
@@ -231,7 +226,7 @@
 
 ### 8.4 Relatório mensal de adesão (dia 1º de cada mês)
 
-> 🤖 **Lembrymed**:
+> **Lembrymed**:
 > 📊 Resumo de adesão de Maria — Julho/2026:
 >
 > 💊 Losartana: 28 de 31 doses confirmadas (90%)
@@ -244,7 +239,7 @@
 
 *Se o paciente ficar parado 2+ horas em uma etapa (máx. 2 nudges por etapa).*
 
-> 🤖 **Lembrymed**:
+> **Lembrymed**:
 > Oi, Maria! 😊 Percebi que paramos no meio do seu cadastro. Quer continuar? É rapidinho — me diga seus medicamentos e horários e eu cuido do resto! 💊
 
 ### 8.6 Z-API offline (alerta interno — vai para o ADMIN, não o paciente)
@@ -265,8 +260,7 @@ DIA 0   ─ 12:34  Maria paga R$ 149 no site (PIX/cartão/boleto)
         ─ 12:38  Maria: "Sim! Minha filha Ana, 11 98888-7777"
         ─ 12:38  Bot: "Tudo pronto! 🎉"  →  PACIENTE ATIVO
 
-DIA 1   ─ 07:50  Lembrete T-10: "⏰ Daqui 10 minutos é hora..."
-        ─ 08:00  Lembrete T=0: "💊 São 08:00 — hora de tomar sua Losartana!"
+DIA 1   ─ 08:00  Lembrete T=0: "💊 São 08:00 — hora de tomar sua Losartana!"
         ─ 08:10  Lembrete T+10: "Você tomou sua Losartana? Responda SIM ou NÃO"
         ─ 08:12  Maria: "SIM"
         ─ 08:12  Bot: "Ótimo, registrado às 08:12! Continue assim! 💙"
@@ -300,4 +294,4 @@ DIA 1º  ─ 09:00  Relatório mensal enviado para Maria e Ana
 
 ---
 
-*Documento gerado a partir do código real (prompts de onboarding, templates de lembrete e fluxos de worker). Válido para a versão atual do repositório. A spec V2.2 (sócios) propõe ajustes: régua T=0+T+10, áudio via Whisper, planos Prata/Ouro — ver `ANALISE_SPEC_V22_SOCIOS.md`.*
+*Documento gerado a partir do código real (prompts de onboarding, templates de lembrete e fluxos de worker). Válido para a versão atual do repositório. Régua de 2 mensagens (T=0 e T+10) já implementada por decisão de produto. A spec V2.2 (sócios) prevê ainda: áudio via Whisper, planos Prata/Ouro — ver `ANALISE_SPEC_V22_SOCIOS.md`.*

@@ -47,7 +47,7 @@ export function startWorkers(): void {
   });
 
   healthServer.listen(HEALTH_PORT, () => {
-    logger.info(`🤖 Workers process listening for health on port ${HEALTH_PORT}`, {
+    logger.info(`Workers process listening for health on port ${HEALTH_PORT}`, {
       nodeEnv: env.NODE_ENV,
       runMode: 'workers',
     });

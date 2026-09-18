@@ -232,11 +232,11 @@ function createProvider(): LlmProvider {
 
   switch (provider) {
     case 'anthropic':
-      logger.info('🤖 LLM Provider: Anthropic Claude');
+      logger.info('LLM Provider: Anthropic Claude');
       return new AnthropicProvider();
     case 'deepseek':
     default:
-      logger.info('🤖 LLM Provider: DeepSeek V3');
+      logger.info('LLM Provider: DeepSeek V3');
       return new DeepSeekProvider();
   }
 }

@@ -7,11 +7,11 @@
  * pacientes não recebem lembretes, recebem no momento errado, ou recebem
  * alertas duplicados.
  *
- * Janelas testadas:
- *   T-10 : diffMin ∈ [7, 13]   — aviso 10 min antes
+ * Janelas testadas (régua de 2 mensagens):
  *   T±0  : diffMin ∈ [-3, 3]   — na hora exata
  *   T+10 : diffMin ∈ [-14, -7] — confirmação pós-medicamento
  *   null : fora das janelas     — não fazer nada
+ *   (T-10 foi descontinuado por decisão de produto)
  */
 
 import { describe, it, expect } from 'vitest';
@@ -21,22 +21,16 @@ import { getReminderType, calcDiffMinutes, isValidMedTime } from '../lib/schedul
 
 describe('getReminderType — janelas de tempo', () => {
 
-  // ── T-10 (aviso 10 min antes) ───────────────────────────────────────────
-  describe('T-10 window [7, 13]', () => {
-    it('diffMin = 7 → t_minus_10 (borda inferior)', () => {
-      expect(getReminderType(7)).toBe('t_minus_10');
+  // ── T-10 (descontinuado — deve retornar null) ─────────────────────────────
+  describe('T-10 descontinuado (régua de 2 mensagens)', () => {
+    it('diffMin = 7 → null (T-10 não é mais enviado)', () => {
+      expect(getReminderType(7)).toBeNull();
     });
-    it('diffMin = 10 → t_minus_10 (centro)', () => {
-      expect(getReminderType(10)).toBe('t_minus_10');
+    it('diffMin = 10 → null (T-10 não é mais enviado)', () => {
+      expect(getReminderType(10)).toBeNull();
     });
-    it('diffMin = 13 → t_minus_10 (borda superior)', () => {
-      expect(getReminderType(13)).toBe('t_minus_10');
-    });
-    it('diffMin = 6.9 → null (abaixo da janela)', () => {
-      expect(getReminderType(6.9)).toBeNull();
-    });
-    it('diffMin = 13.1 → null (acima da janela)', () => {
-      expect(getReminderType(13.1)).toBeNull();
+    it('diffMin = 13 → null (T-10 não é mais enviado)', () => {
+      expect(getReminderType(13)).toBeNull();
     });
   });
 
@@ -97,7 +91,7 @@ describe('getReminderType — janelas de tempo', () => {
       expect(getReminderType(-5)).toBeNull();
       expect(getReminderType(-6)).toBeNull();
     });
-    it('diffMin entre T-10 e T±0 (4 a 6) → null (gap intencional)', () => {
+    it('diffMin antes de T±0 (4 a 6) → null (gap intencional)', () => {
       expect(getReminderType(4)).toBeNull();
       expect(getReminderType(5)).toBeNull();
       expect(getReminderType(6)).toBeNull();
@@ -108,7 +102,7 @@ describe('getReminderType — janelas de tempo', () => {
   describe('determinismo', () => {
     it('resultados são determinísticos (sem aleatoriedade)', () => {
       for (let i = 0; i < 100; i++) {
-        expect(getReminderType(10)).toBe('t_minus_10');
+        expect(getReminderType(10)).toBeNull();
         expect(getReminderType(0)).toBe('t_zero');
         expect(getReminderType(-10)).toBe('t_plus_10');
         expect(getReminderType(20)).toBeNull();
@@ -143,12 +137,12 @@ describe('calcDiffMinutes', () => {
     expect(diff).toBeCloseTo(0, 1);
   });
 
-  it('identifica janela T-10 corretamente para med às 08:00 quando são 07:51', () => {
+  it('identifica que med às 08:00 não dispara T-10 às 07:51 (régua de 2 mensagens)', () => {
     const nowBRT = new Date();
     nowBRT.setHours(7, 51, 0, 0);
     const diff = calcDiffMinutes(8, 0, nowBRT);
     expect(diff).toBeCloseTo(9, 0);
-    expect(getReminderType(diff)).toBe('t_minus_10');
+    expect(getReminderType(diff)).toBeNull();
   });
 
   it('identifica janela T±0 para med às 08:00 quando são 08:01', () => {

@@ -10,17 +10,17 @@
 export type TemplateFn = (name: string, dosage: string, time?: string) => string;
 
 export const REMINDER_TEMPLATES: Record<string, TemplateFn> = {
-  // ── Formato ativo (MVP v2) ──────────────────────────────────────────────
-  t_minus_10: (name, dosage, time) =>
-    `⏰ Daqui 10 minutos é hora de tomar sua ${name} ${dosage}${time ? ` (${time})` : ''}. Prepare-se! 💊`,
-
+  // ── Formato ativo (régua de 2 mensagens) ───────────────────────────────
   t_zero: (name, dosage, time) =>
     `💊 ${time ? `São ${time} — h` : 'H'}ora de tomar sua ${name} ${dosage}!`,
 
   t_plus_10: (name, dosage) =>
     `Você tomou sua ${name} ${dosage}?\nResponda SIM ou NÃO 💊`,
 
-  // ── Retrocompatibilidade (MVP v1 — jobs legados em voo no Redis) ────────
+  // ── Retrocompatibilidade (jobs legados em voo no Redis durante deploys) ──
+  t_minus_10: (name, dosage, time) =>
+    `⏰ Daqui 10 minutos é hora de tomar sua ${name} ${dosage}${time ? ` (${time})` : ''}. Prepare-se! 💊`,
+
   t_minus_30: (name, dosage) =>
     `⏰ Daqui 30 minutos é hora de tomar sua ${name} ${dosage}. Prepare-se! 💊`,
 

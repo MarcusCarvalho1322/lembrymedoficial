@@ -15,14 +15,14 @@ export type ReminderType = 't_minus_10' | 't_zero' | 't_plus_10' | null;
  * @param diffMin - Diferença em minutos: positivo = medicamento ainda não chegou,
  *                  negativo = já passou o horário.
  *
- * Janelas:
- *   T-10 : diffMin ∈ [7, 13]   → aviso 10 min antes
+ * Janelas (régua de 2 mensagens — decisão de produto):
  *   T±0  : diffMin ∈ [-3, 3]   → na hora exata
  *   T+10 : diffMin ∈ [-14, -7] → confirmação 10 min depois
  *   null : fora de qualquer janela → ignorar
+ *   (t_minus_10 foi descontinuado; o tipo permanece no union apenas para
+ *    retrocompatibilidade com jobs BullMQ em voo durante deploys)
  */
 export function getReminderType(diffMin: number): ReminderType {
-  if (diffMin >= 7  && diffMin <= 13)  return 't_minus_10';
   if (diffMin >= -3 && diffMin <= 3)   return 't_zero';
   if (diffMin >= -14 && diffMin <= -7) return 't_plus_10';
   return null;

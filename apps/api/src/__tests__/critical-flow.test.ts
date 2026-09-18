@@ -51,22 +51,15 @@ describe('timezone BRT — integridade de data/hora', () => {
   });
 
   it('getTodayBRT não é afetado por UTC — consistente com BRT', () => {
-    // getTodayBRT usa America/Sao_Paulo, não UTC
+    // getTodayBRT usa America/Sao_Paulo, não UTC.
+    // Comparação robusta: a data retornada deve ser SEMPRE a data atual
+    // no fuso de Brasília, calculada independentemente via Intl.
     const brtDate = getTodayBRT();
-    const utcDate = new Date().toISOString().split('T')[0];
+    const expected = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Sao_Paulo',
+    }).format(new Date()); // formato YYYY-MM-DD
 
-    // Próximo à meia-noite BRT, podem divergir (BRT = UTC-3)
-    // Nas demais horas, devem ser iguais ou BRT estar 1 dia atrás
-    const brtHour = new Date().toLocaleString('en-US', {
-      timeZone: 'America/Sao_Paulo', hour: 'numeric', hour12: false,
-    });
-    const hour = parseInt(brtHour, 10);
-
-    if (hour >= 3) {
-      // Depois das 03:00 BRT, UTC já virou o dia também
-      expect(brtDate).toBe(utcDate);
-    }
-    // Entre 00:00-02:59 BRT, pode haver divergência — não assertamos
+    expect(brtDate).toBe(expected);
   });
 });
 
@@ -74,7 +67,7 @@ describe('timezone BRT — integridade de data/hora', () => {
 // 2. FLUXO COMPLETO — T-10 → T±0 → T+10 (três janelas)
 // ═══════════════════════════════════════════════════════════
 
-describe('fluxo completo T-10 → T±0 → T+10', () => {
+describe('fluxo completo T±0 → T+10 (régua de 2 mensagens)', () => {
 
   // Simula a passagem do tempo: medicamento às 08:00, scheduler roda a cada 1 min
   const MED_HOUR = 8;
@@ -86,18 +79,18 @@ describe('fluxo completo T-10 → T±0 → T+10', () => {
     return d;
   }
 
-  it('07:50 → T-10 (janela de aviso)', () => {
+  it('07:50 → null (T-10 descontinuado na régua de 2 mensagens)', () => {
     const now = simulateNow(7, 50);
     const diff = calcDiffMinutes(MED_HOUR, MED_MIN, now);
     expect(diff).toBeCloseTo(10, 0);
-    expect(getReminderType(diff)).toBe('t_minus_10');
+    expect(getReminderType(diff)).toBeNull();
   });
 
-  it('07:51 → T-10 (dentro da janela)', () => {
+  it('07:51 → null (T-10 descontinuado)', () => {
     const now = simulateNow(7, 51);
     const diff = calcDiffMinutes(MED_HOUR, MED_MIN, now);
     expect(diff).toBeCloseTo(9, 0); // 9 min antes
-    expect(getReminderType(diff)).toBe('t_minus_10');
+    expect(getReminderType(diff)).toBeNull();
   });
 
   it('07:57 → T±0 (3 min antes, borda da janela)', () => {
@@ -106,10 +99,10 @@ describe('fluxo completo T-10 → T±0 → T+10', () => {
     expect(getReminderType(diff)).toBe('t_zero'); // 3 min → [-3,3]
   });
 
-  it('07:47 → T-10 (borda inferior)', () => {
+  it('07:47 → null (T-10 descontinuado)', () => {
     const now = simulateNow(7, 47);
     const diff = calcDiffMinutes(MED_HOUR, MED_MIN, now);
-    expect(getReminderType(diff)).toBe('t_minus_10');
+    expect(getReminderType(diff)).toBeNull();
   });
 
   it('08:00 → T±0 (hora exata)', () => {
@@ -300,16 +293,16 @@ describe('casos de borda — timezone e virada de dia', () => {
     // para o mesmo dia, e o scheduler lida com a virada.
     const now = new Date();
     now.setHours(0, 0, 0, 0);
-    // Med às 00:10 → diff de +10 min (futuro)
+    // Med às 00:10 → diff de +10 min (futuro) — T-10 descontinuado → null
     const diffFuture = calcDiffMinutes(0, 10, now);
-    expect(getReminderType(diffFuture)).toBe('t_minus_10');
+    expect(getReminderType(diffFuture)).toBeNull();
   });
 
-  it('medicamento 00:10 → T-10 às 00:00 (madrugada)', () => {
+  it('medicamento 00:10 → null às 00:00 (T-10 descontinuado, madrugada)', () => {
     const now = new Date();
     now.setHours(0, 0, 0, 0);
     const diff = calcDiffMinutes(0, 10, now);
-    expect(getReminderType(diff)).toBe('t_minus_10');
+    expect(getReminderType(diff)).toBeNull();
   });
 
   it('medicamento 00:00 → T±0 à meia-noite', () => {
