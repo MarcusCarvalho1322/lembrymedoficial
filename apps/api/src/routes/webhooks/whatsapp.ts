@@ -32,7 +32,8 @@ import { timingSafeEqual } from 'crypto';
 import { z } from 'zod';
 import {
   db, patients, messageLogs, medicationConfirmations,
-  reminderLogs, medications, familyContacts, lgpdIncidents, eq, and, desc,
+  reminderLogs, medications, familyContacts, lgpdIncidents,
+  subscriptions, eq, and, desc,
 } from '@lembrymed/database';
 import { sql } from 'drizzle-orm';
 import { WhatsAppClient } from '../../clients/dialog360.client';
@@ -198,6 +199,24 @@ const SELF_FAMILY_MSG =
   `a notificação precisa chegar a outra pessoa.\n\n` +
   `Se ainda não decidiu quem colocar, sem problema! Você pode deixar esse campo em aberto e ` +
   `adicionar um familiar quando quiser. 😊`;
+
+/** Mensagem quando paciente PRATA tenta usar recurso exclusivo do plano OURO. */
+const FAMILY_UPGRADE_MSG =
+  `O alerta ao familiar é um recurso exclusivo do *plano Ouro*. 💛\n\n` +
+  `Se quiser, você pode fazer um upgrade de plano para ativar essa proteção extra. ` +
+  `Fale com nosso suporte humano enviando a palavra AJUDA!`;
+
+/**
+ * Retorna o nível comercial do paciente: SILVER (Prata) | GOLD (Ouro).
+ * Default SILVER — recurso de alerta familiar só é liberado no Ouro.
+ */
+async function getPatientPlanTier(patientId: string): Promise<string> {
+  const sub = await db.query.subscriptions.findFirst({
+    where: eq(subscriptions.patientId, patientId),
+    orderBy: [desc(subscriptions.createdAt)],
+  });
+  return sub?.planTier || 'SILVER';
+}
 
 // ═══════════════════════════════════════════════════════════
 // WEBHOOK PRINCIPAL
@@ -401,8 +420,16 @@ async function processWebhookPayload(payload: any): Promise<void> {
     return;
   }
 
-  // 2c. Gerenciamento de familiar
+  // 2c. Gerenciamento de familiar — exclusivo do plano OURO
   if (isInFamilyMode || wantsFamilyUpdate) {
+    const tier = await getPatientPlanTier(patient.id);
+    if (tier !== 'GOLD') {
+      await whatsapp.sendTextMessage(patient.phone, FAMILY_UPGRADE_MSG);
+      logger.info('Tentativa de gerenciar familiar no plano PRATA bloqueada', {
+        patientId: patient.id, tier,
+      });
+      return;
+    }
     await handleFamilyUpdateConversation(patient, text, isInFamilyMode);
     return;
   }
@@ -422,6 +449,11 @@ async function handleOnboardingConversation(
 ): Promise<void> {
   const firstName = patient.fullName.split(' ')[0];
   const step      = patient.onboardingStep || 'welcome_sent';
+
+  // ── Plano comercial: alerta familiar é exclusivo do plano OURO ──────────
+  // Prata (SILVER) = lembretes individuais, SEM pergunta/cadastro de familiar.
+  const planTier    = await getPatientPlanTier(patient.id);
+  const allowFamily = planTier === 'GOLD';
 
   const recentLogs = await db.query.messageLogs.findMany({
     where:   eq(messageLogs.patientId, patient.id),
@@ -470,7 +502,7 @@ async function handleOnboardingConversation(
     }
 
     const response = await llmChat(history as ChatMessage[], {
-      system: buildOnboardingSystemPrompt(firstName, step, patient.phone),
+      system: buildOnboardingSystemPrompt(firstName, step, patient.phone, allowFamily),
       maxTokens: 1024,
       media: mediaBlocks.length > 0 ? mediaBlocks : undefined,
     });
@@ -501,15 +533,26 @@ async function handleOnboardingConversation(
 
   // ── Processar marcadores de estado ──────────────────────────────
 
-  // [MEDICAMENTOS_CONFIRMADOS] → extrair/salvar meds, avançar para family_asked
+  // [MEDICAMENTOS_CONFIRMADOS] → extrair/salvar meds
   if (agentReply.includes('[MEDICAMENTOS_CONFIRMADOS]')) {
     await extractAndSaveMedications(patient, history, 'onboarding').catch((err) => {
       logger.error('extractAndSaveMedications falhou', { error: err.message, patientId: patient.id });
     });
-    await db.update(patients)
-      .set({ onboardingStep: 'family_asked', updatedAt: new Date() })
-      .where(eq(patients.id, patient.id));
-    logger.info('Meds salvos → aguardando familiar', { patientId: patient.id });
+    if (allowFamily) {
+      // Ouro: avança para a pergunta do familiar
+      await db.update(patients)
+        .set({ onboardingStep: 'family_asked', updatedAt: new Date() })
+        .where(eq(patients.id, patient.id));
+      logger.info('Meds salvos → aguardando familiar (plano OURO)', { patientId: patient.id });
+    } else {
+      // Prata: sem etapa de familiar — ativa direto
+      await db.update(patients)
+        .set({ onboardingStep: 'active', agentSessionId: null, updatedAt: new Date() })
+        .where(eq(patients.id, patient.id));
+      logger.info('Meds salvos → paciente ativado sem familiar (plano PRATA)', { patientId: patient.id });
+      invalidateAndSync().catch(() => {});
+      return;
+    }
   }
 
   // [FAMILIAR_CONFIRMADO:Nome:phone] → salvar familiar
@@ -558,11 +601,16 @@ async function handleOnboardingConversation(
   }
 }
 
-function buildOnboardingSystemPrompt(firstName: string, step: string, patientPhone: string): string {
-  const isPostMeds = ['family_asked', 'family_registered'].includes(step);
+function buildOnboardingSystemPrompt(
+  firstName: string,
+  step: string,
+  patientPhone: string,
+  allowFamily: boolean,
+): string {
+  const isPostMeds = allowFamily && ['family_asked', 'family_registered'].includes(step);
 
   if (isPostMeds) {
-    // Fase 2: já tem medicamentos, foco em familiar
+    // Fase 2 (somente plano OURO): já tem medicamentos, foco em familiar
     return `Você é a assistente do Lembrymed. ${firstName} já cadastrou seus medicamentos.
 
 MISSÃO AGORA: Confirmar se ${firstName} deseja cadastrar um contato familiar.
@@ -593,38 +641,26 @@ Quando ${firstName} não quiser cadastrar familiar (recusar, pular, agora não, 
 NUNCA use [ONBOARDING_COMPLETO] sem antes confirmar a decisão do paciente sobre o familiar.`;
   }
 
-  // Fase 1: coleta de medicamentos + pergunta sobre familiar ao final
+  // Fase 1: coleta de medicamentos (+ pergunta sobre familiar somente se Ouro)
+  const familyBlock = allowFamily
+    ? `\n── ETAPA 2: Familiar (opcional — plano Ouro) ────────────────\nLogo após [MEDICAMENTOS_CONFIRMADOS], pergunte:\n"Deseja cadastrar um contato familiar que receberá um aviso caso você esqueça de confirmar que tomou seu medicamento? É opcional — basta me enviar o nome e o número de WhatsApp. 👨‍👩‍👧"\n\n- Se ${firstName} fornecer nome + telefone e confirmar:\n  adicione: [FAMILIAR_CONFIRMADO:Nome:55DDD9numero][ONBOARDING_COMPLETO]\n- Se ${firstName} não quiser ou pular:\n  adicione: [ONBOARDING_COMPLETO]\n\nREGRA DE SEGURANÇA — NÚMERO PRÓPRIO:\nNUNCA use [FAMILIAR_CONFIRMADO] com o número ${patientPhone} (o próprio número de ${firstName}).\nSe ${firstName} informar esse número como contato familiar, responda com gentileza:\n"Pelas nossas diretrizes de uso, não é permitido usar o seu próprio número como contato familiar — a notificação precisa chegar a outra pessoa. 😊 Você pode deixar esse campo em aberto e adicionar um familiar quando decidir!"\nNesse caso, finalize com [ONBOARDING_COMPLETO] sem [FAMILIAR_CONFIRMADO].`
+    : `\nIMPORTANTE — PLANO PRATA:\nEste paciente está no plano Prata, que NÃO inclui o alerta ao familiar.\nNÃO pergunte sobre contato familiar em nenhum momento.\nAo confirmar os medicamentos com [MEDICAMENTOS_CONFIRMADOS], finalize a MESMA mensagem com [ONBOARDING_COMPLETO].\nNUNCA use [FAMILIAR_CONFIRMADO].`;
+
   return `Você é a assistente virtual do Lembrymed para ${firstName}.
 Está ajudando ${firstName} a configurar seus lembretes de medicamentos pela primeira vez.
 
 ESTADO ATUAL: ${step}
 
-FLUXO EM DUAS ETAPAS:
+FLUXO DE CADASTRO:
 
 ── ETAPA 1: Medicamentos ──────────────────────────────────────
 Colete a lista completa: nome, dosagem e horário(s) de cada medicamento.
 Quando ${firstName} confirmar explicitamente a lista completa (com horários de TODOS),
-escreva a mensagem de confirmação dos medicamentos e adicione ao final: [MEDICAMENTOS_CONFIRMADOS]
-Em seguida, na MESMA mensagem, pergunte sobre o contato familiar (Etapa 2).
-
-── ETAPA 2: Familiar (opcional) ───────────────────────────────
-Logo após [MEDICAMENTOS_CONFIRMADOS], pergunte:
-"Deseja cadastrar um contato familiar que receberá um aviso caso você esqueça de confirmar que tomou seu medicamento? É opcional — basta me enviar o nome e o número de WhatsApp. 👨‍👩‍👧"
-
-- Se ${firstName} fornecer nome + telefone e confirmar:
-  adicione: [FAMILIAR_CONFIRMADO:Nome:55DDD9numero][ONBOARDING_COMPLETO]
-- Se ${firstName} não quiser ou pular:
-  adicione: [ONBOARDING_COMPLETO]
-
-REGRA DE SEGURANÇA — NÚMERO PRÓPRIO:
-NUNCA use [FAMILIAR_CONFIRMADO] com o número ${patientPhone} (o próprio número de ${firstName}).
-Se ${firstName} informar esse número como contato familiar, responda com gentileza:
-"Pelas nossas diretrizes de uso, não é permitido usar o seu próprio número como contato familiar — a notificação precisa chegar a outra pessoa. 😊 Você pode deixar esse campo em aberto e adicionar um familiar quando decidir!"
-Nesse caso, finalize com [ONBOARDING_COMPLETO] sem [FAMILIAR_CONFIRMADO].
+escreva a mensagem de confirmação dos medicamentos e adicione ao final: [MEDICAMENTOS_CONFIRMADOS]${familyBlock}
 
 REGRAS GERAIS:
 - Responda SEMPRE em português brasileiro, de forma calorosa e simples
-- Use emojis com moderação (💊 🕐 ✅ 👨‍👩‍👧)
+- Use emojis com moderação (💊 🕐 ✅)
 - Respostas curtas (máx. 3 parágrafos)
 
 RECEITA MÉDICA (foto ou PDF):

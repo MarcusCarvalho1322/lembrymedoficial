@@ -32,11 +32,25 @@ const CheckoutBody = z.object({
       },
       { message: 'Telefone inválido. Inclua DDD (ex: 11 99999-9999).' },
     ),
+  /** Plano escolhido no checkout: SILVER (Prata) | GOLD (Ouro). Default: SILVER. */
+  plan: z.enum(['SILVER', 'GOLD']).default('SILVER'),
   consentAccepted: z.literal(true, {
     errorMap: () => ({ message: 'Consentimento obrigatório para prosseguir.' }),
   }),
   consentVersion: z.string().min(3).max(50),
 });
+
+/** Resolve o price_id do Stripe conforme o plano escolhido. */
+function resolvePriceId(plan: 'SILVER' | 'GOLD'): string {
+  if (plan === 'GOLD') {
+    return (
+      process.env.STRIPE_PRICE_GOLD ||
+      process.env.STRIPE_PRICE_SILVER ||
+      process.env.STRIPE_PRICE_ANNUAL!
+    );
+  }
+  return process.env.STRIPE_PRICE_SILVER || process.env.STRIPE_PRICE_ANNUAL!;
+}
 
 /** Normaliza telefone para formato E.164 brasileiro (55DDDXXXXXXXXX). */
 function formatPhone(phone: string): string {
@@ -58,9 +72,10 @@ export async function POST(req: NextRequest) {
       const msg = parsed.error.issues[0]?.message || 'Dados inválidos';
       return NextResponse.json({ error: msg }, { status: 400 });
     }
-    const { name, email, phone, consentVersion } = parsed.data;
+    const { name, email, phone, plan, consentVersion } = parsed.data;
 
     const formattedPhone = formatPhone(phone);
+    const priceId = resolvePriceId(plan);
 
     const webUrl =
       process.env.NEXT_PUBLIC_WEB_URL ||
@@ -72,11 +87,13 @@ export async function POST(req: NextRequest) {
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
-      line_items: [{ price: process.env.STRIPE_PRICE_ANNUAL!, quantity: 1 }],
+      line_items: [{ price: priceId, quantity: 1 }],
       customer_email: email,
       metadata: {
         name,
         phone: formattedPhone,
+        plan,
+        planTier: plan,
         source: 'landing-page',
         // LGPD — metadata é persistido e o webhook Stripe grava em consent_logs
         consentVersion,

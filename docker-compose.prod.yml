@@ -97,6 +97,8 @@ services:
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
       STRIPE_PRICE_ANNUAL: ${STRIPE_PRICE_ANNUAL}
+      STRIPE_PRICE_SILVER: ${STRIPE_PRICE_SILVER:-}
+      STRIPE_PRICE_GOLD: ${STRIPE_PRICE_GOLD:-}
       WEB_URL: ${WEB_URL}
       API_URL: ${API_URL}
       ADMIN_EMAIL: ${ADMIN_EMAIL}
@@ -140,6 +142,8 @@ services:
       NEXT_PUBLIC_WEB_URL: ${WEB_URL}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
       STRIPE_PRICE_ANNUAL: ${STRIPE_PRICE_ANNUAL}
+      STRIPE_PRICE_SILVER: ${STRIPE_PRICE_SILVER:-}
+      STRIPE_PRICE_GOLD: ${STRIPE_PRICE_GOLD:-}
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
       interval: 30s

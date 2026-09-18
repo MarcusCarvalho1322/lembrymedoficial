@@ -221,14 +221,17 @@ body { font-family: var(--font); color: var(--text); background: var(--bg); }
 
 /* ── PRICING ── */
 .pricing { padding: 72px 0; text-align: center; }
+.pricing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 980px; margin: 0 auto; align-items: stretch; }
 .price-card {
-  max-width: 460px; margin: 0 auto; background: #fff;
+  background: #fff;
   border: 2px solid var(--border);
-  border-radius: 20px; padding: 40px;
+  border-radius: 20px; padding: 40px 32px;
   box-shadow: 0 12px 40px rgba(26,86,50,0.08);
   transition: all .3s;
   position: relative; overflow: hidden;
+  display: flex; flex-direction: column;
 }
+.price-card.highlight { border-color: #B87333; border-width: 3px; box-shadow: 0 18px 52px rgba(184,115,51,0.22); }
 .price-card::before {
   content: '';
   position: absolute; top: 0; left: 0; right: 0; height: 4px;
@@ -236,11 +239,19 @@ body { font-family: var(--font); color: var(--text); background: var(--bg); }
   background-size: 200% 100%;
   animation: shimmer 3s infinite;
 }
+.price-card.highlight::before {
+  background: linear-gradient(90deg, #B87333, #D4A853, #B87333);
+  background-size: 200% 100%;
+  animation: shimmer 3s infinite;
+}
 .price-card:hover { transform: translateY(-4px); box-shadow: 0 20px 52px rgba(26,86,50,0.16); }
 .price-badge { display: inline-block; background: var(--green); color: #fff; padding: 5px 16px; border-radius: 20px; font-size: 12px; font-weight: 600; margin-bottom: 20px; }
+.price-badge.gold { background: linear-gradient(135deg, #B87333, #D4A853); }
 .price-anchor { font-size: 16px; font-weight: 600; color: var(--hint); margin-bottom: 16px; line-height: 1.6; }
 .price-anchor strong { color: var(--green); }
+.price-anchor .old { text-decoration: line-through; color: #9CA3AF; font-size: 20px; margin-right: 8px; }
 .price-amount { font-family: var(--serif); font-size: 52px; font-weight: 800; color: var(--green); }
+.price-card.highlight .price-amount { color: #B87333; }
 .price-per { font-size: 20px; font-weight: 700; color: var(--sub); }
 .price-monthly { font-size: 18px; font-weight: 600; color: var(--hint); margin: 6px 0 20px; }
 .price-guarantee {
@@ -249,10 +260,24 @@ body { font-family: var(--font); color: var(--text); background: var(--bg); }
   padding: 8px 18px; border-radius: 20px;
   font-size: 14px; font-weight: 700; margin-bottom: 24px;
 }
-.price-features { text-align: left; margin-bottom: 28px; }
+.price-features { text-align: left; margin-bottom: 28px; flex: 1; }
 .price-feat { display: flex; align-items: center; gap: 10px; padding: 9px 0; font-size: 17px; font-weight: 700; color: var(--sub); border-bottom: 1px solid rgba(26,86,50,0.08); }
 .price-feat:last-child { border-bottom: none; }
 .price-feat span { color: var(--green); font-weight: 700; }
+.price-card.highlight .price-feat span { color: #B87333; }
+.price-cta { margin-top: auto; }
+.plan-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 14px 0 18px; }
+.plan-opt {
+  border: 2px solid #E0E7E3; border-radius: 12px; padding: 14px 10px;
+  cursor: pointer; text-align: center; transition: all .2s; background: #fff;
+}
+.plan-opt:hover { border-color: var(--green-mid); }
+.plan-opt.selected { border-color: var(--green); background: var(--green-light); box-shadow: 0 0 0 3px rgba(26,86,50,0.12); }
+.plan-opt.gold.selected { border-color: #B87333; background: #FBF5EC; box-shadow: 0 0 0 3px rgba(184,115,51,0.15); }
+.plan-opt-name { font-size: 16px; font-weight: 700; color: var(--green); }
+.plan-opt.gold .plan-opt-name { color: #B87333; }
+.plan-opt-price { font-size: 15px; font-weight: 700; color: var(--sub); margin-top: 2px; }
+.plan-opt-desc { font-size: 12px; font-weight: 600; color: var(--hint); margin-top: 4px; }
 
 /* ── URGENCY ── */
 .urgency {
@@ -331,6 +356,8 @@ body { font-family: var(--font); color: var(--text); background: var(--bg); }
   .alert-phone:nth-child(2) { margin-top: 0; }
   .whom-grid { grid-template-columns: 1fr; }
   .testimonial-grid { grid-template-columns: 1fr; }
+  .pricing-grid { grid-template-columns: 1fr; }
+  .plan-pick { grid-template-columns: 1fr; }
   .nav-logo { height: 18px; }
   .nav-cta { font-size: 12px; padding: 8px 16px; }
 }
@@ -338,8 +365,8 @@ body { font-family: var(--font); color: var(--text); background: var(--bg); }
 
 const FAQS = [
   { q: "Meu pai/mãe não sabe mexer no WhatsApp direito. Vai funcionar?", a: "Só precisa responder 'SIM'. Uma palavra. Se souber mandar áudio, já sabe usar. A interface é 100% via chat — nada de menus, botões ou apps novos." },
-  { q: "E se ele(a) ignorar os lembretes?", a: "Após 30 minutos sem resposta, você — e outros familiares cadastrados — recebem um alerta automático no WhatsApp. Você decide se liga, manda mensagem ou vai até lá." },
-  { q: "Posso cadastrar mais de um familiar para receber o alerta?", a: "Sim. Cadastre quantos quiser: irmãos, netos, cuidadores. Todos recebem o alerta ao mesmo tempo quando algo não é confirmado." },
+  { q: "E se ele(a) ignorar os lembretes?", a: "No plano Ouro, após 30 minutos sem resposta você — e outros familiares cadastrados — recebem um alerta automático no WhatsApp. Você decide se liga, manda mensagem ou vai até lá." },
+  { q: "Posso cadastrar mais de um familiar para receber o alerta?", a: "Sim, no plano Ouro. Cadastre quantos quiser: irmãos, netos, cuidadores. Todos recebem o alerta ao mesmo tempo quando algo não é confirmado." },
   { q: "Quanto tempo leva para configurar?", a: "De 5 a 10 minutos. Você digita os remédios da sua mãe/pai em linguagem natural ou envia uma foto da receita. Nossa IA identifica tudo automaticamente." },
   { q: "Tem suporte se algo der errado?", a: "Sim. Suporte humano via WhatsApp. Resposta rápida, em minutos, direto no chat." },
   { q: "E se eu quiser cancelar?", a: "Cancele a qualquer momento, sem multa. Ou use a garantia de 7 dias e receba 100% do valor de volta." },
@@ -375,6 +402,7 @@ function Logo({ h, white }: { h: number; white?: boolean }) {
 export default function LembrymedLanding() {
   const [show, setShow] = useState(false);
   const [faq, setFaq] = useState(-1);
+  const [plan, setPlan] = useState<"SILVER" | "GOLD">("SILVER");
   const [form, setForm] = useState({ name: "", email: "", phone: "" });
   const [consentAccepted, setConsentAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -477,8 +505,8 @@ export default function LembrymedLanding() {
         <div ref={steps.ref} className="steps">
           {[
             { n: "1", h: "Você cadastra em 5 minutos", p: "Nossa IA lê a receita da sua mãe em segundos. Você só envia uma foto ou digita os nomes dos remédios — o resto é automático." },
-            { n: "2", h: "Ela recebe", p: "3 lembretes por remédio, por dia. Sua mãe só precisa responder 'SIM'. Sem app, sem senha, sem complicação." },
-            { n: "3", h: "Você é avisado", p: "Se ela não responder em 30 minutos, você recebe um alerta no seu WhatsApp. Na mesma hora." },
+            { n: "2", h: "Ela recebe", p: "2 lembretes por dose: na hora exata e uma confirmação 10 minutos depois. Sua mãe só precisa responder 'SIM'. Sem app, sem senha, sem complicação." },
+            { n: "3", h: "Você é avisado", p: "No plano Ouro, se ela não responder em 30 minutos, você recebe um alerta no seu WhatsApp. Na mesma hora." },
           ].map((s, i) => (
             <div
               key={i}
@@ -519,6 +547,9 @@ export default function LembrymedLanding() {
             <div className="alert-feat"><span>✓</span> Se algo sair do planejado, <strong>você fica sabendo na hora</strong></div>
             <div className="alert-feat"><span>✓</span> Se der tudo certo, você <strong>dorme tranquilo</strong></div>
             <div className="alert-feat"><span>✓</span> Cadastre <strong>quantos familiares quiser</strong> — todos recebem o alerta</div>
+            <div style={{display:"inline-block",marginTop:14,background:"linear-gradient(135deg,#B87333,#D4A853)",color:"#fff",padding:"6px 16px",borderRadius:20,fontSize:13,fontWeight:700}}>
+              ⭐ Recurso do plano Ouro
+            </div>
           </div>
         </div>
       </div>
@@ -582,38 +613,69 @@ export default function LembrymedLanding() {
     {/* ── PRICING ── */}
     <section className="pricing">
       <div className="container">
-        <h2 className="section-title">Plano único para a família toda</h2>
+        <h2 className="section-title">Escolha o plano ideal para a sua família</h2>
         <p className="section-sub">Sem surpresas, sem taxas escondidas</p>
-        <div className="price-card">
-          <div className="price-badge">Plano Família</div>
-          <div className="price-anchor">
-            Menos de <strong>R$ 0,40 por dia</strong><br/>
-            Mais barato que 1 mensagem de SMS.<br/>
-            Muito menos que 1 consulta de emergência.<br/>
-            <span style={{color:'var(--green)',fontWeight:700,fontSize:15}}>R$ 149/ano vs. R$ 350+ de uma emergência que poderia ser evitada.</span>
+        <div className="pricing-grid">
+
+          {/* ── PLANO PRATA ── */}
+          <div className="price-card">
+            <div className="price-badge">Plano Prata</div>
+            <div className="price-amount">R$ 149</div><div className="price-per">/ano</div>
+            <div className="price-monthly">Equivale a R$ 12,42/mês</div>
+            <div className="price-guarantee">🛡️ 7 dias de garantia incondicional</div>
+            <div className="price-features">
+              {[
+                "Lembretes ilimitados via WhatsApp",
+                "Medicamentos ilimitados",
+                "2 lembretes por dose (na hora + confirmação)",
+                "Cadastro por texto ou foto da receita",
+                "Histórico de confirmações",
+                "100% WhatsApp — sem app",
+                "Suporte humano via WhatsApp",
+                "7 dias de garantia — reembolso total",
+              ].map(f => (
+                <div key={f} className="price-feat"><span>✓</span> {f}</div>
+              ))}
+            </div>
+            <div className="price-cta">
+              <button className="btn-primary" onClick={() => { setPlan("SILVER"); setShow(true); }}>
+                Assinar Prata — R$ 149/ano →
+              </button>
+            </div>
           </div>
-          <div className="price-amount">R$ 149</div><div className="price-per">/ano</div>
-          <div className="price-monthly">Equivale a R$ 12,42/mês</div>
-          <div className="price-guarantee">🛡️ 7 dias de garantia incondicional</div>
-          <div className="price-features">
-            {[
-              "Lembretes ilimitados via WhatsApp",
-              "Até 20 medicamentos",
-              "3 lembretes por dose",
-              "Alerta ao familiar (quantos quiser)",
-              "Cadastro por texto ou foto da receita",
-              "Histórico de confirmações",
-              "100% WhatsApp — sem app",
-              "Suporte humano via WhatsApp",
-              "7 dias de garantia — reembolso total",
-            ].map(f => (
-              <div key={f} className="price-feat"><span>✓</span> {f}</div>
-            ))}
+
+          {/* ── PLANO OURO ── */}
+          <div className="price-card highlight">
+            <div className="price-badge gold">⭐ Plano Ouro — Mais completo</div>
+            <div className="price-anchor">
+              <span className="old">R$ 339</span>
+            </div>
+            <div className="price-amount">R$ 239</div><div className="price-per">/ano</div>
+            <div className="price-monthly">Equivale a R$ 19,92/mês</div>
+            <div className="price-guarantee">🛡️ 7 dias de garantia incondicional</div>
+            <div className="price-features">
+              {[
+                "Tudo do plano Prata",
+                "⚠️ Alerta ao cuidador: familiar avisado se ela não confirmar",
+                "Cadastre quantos familiares quiser",
+                "Relatórios mensais de adesão",
+                "Medicamentos semanais e mensais",
+                "Prioridade no suporte humano",
+              ].map(f => (
+                <div key={f} className="price-feat"><span>✓</span> {f}</div>
+              ))}
+            </div>
+            <div className="price-cta">
+              <button className="btn-primary" style={{background:"linear-gradient(135deg,#B87333,#D4A853)", boxShadow:"0 4px 14px rgba(184,115,51,0.3)"}}
+                onClick={() => { setPlan("GOLD"); setShow(true); }}>
+                Assinar Ouro — R$ 239/ano →
+              </button>
+            </div>
           </div>
-          <button className="btn-primary" onClick={() => setShow(true)}>Começar agora — R$ 149/ano, 7 dias de garantia →</button>
-          <div style={{textAlign:"center",fontSize:13,color:"var(--hint)",marginTop:12,fontWeight:600}}>
-            🔒 Pagamento seguro via Stripe · Dados protegidos pela LGPD
-          </div>
+
+        </div>
+        <div style={{textAlign:"center",fontSize:13,color:"var(--hint)",marginTop:20,fontWeight:600}}>
+          🔒 Pagamento seguro via Stripe (cartão, Pix ou boleto) · Dados protegidos pela LGPD
         </div>
       </div>
     </section>
@@ -631,9 +693,30 @@ export default function LembrymedLanding() {
           <div style={{textAlign:"center",marginBottom:24}}>
             <Logo h={44} />
             <div id="checkout-title" style={{color:"var(--sub)",fontSize:14,marginTop:8,fontWeight:600}}>
-              Assinatura Anual — R$ 149,00
+              Assinatura Anual — {plan === "GOLD" ? "Plano Ouro" : "Plano Prata"}
             </div>
           </div>
+
+          {/* ── Seletor de plano ── */}
+          <div className="plan-pick">
+            <div
+              className={`plan-opt${plan === "SILVER" ? " selected" : ""}`}
+              onClick={() => setPlan("SILVER")}
+            >
+              <div className="plan-opt-name">Prata</div>
+              <div className="plan-opt-price">R$ 149/ano</div>
+              <div className="plan-opt-desc">Lembretes ilimitados</div>
+            </div>
+            <div
+              className={`plan-opt gold${plan === "GOLD" ? " selected" : ""}`}
+              onClick={() => setPlan("GOLD")}
+            >
+              <div className="plan-opt-name">Ouro</div>
+              <div className="plan-opt-price">R$ 239/ano</div>
+              <div className="plan-opt-desc">+ Alerta ao cuidador e relatórios</div>
+            </div>
+          </div>
+
           <div className="form-group">
             <label htmlFor="cf-name">Seu nome completo</label>
             <input id="cf-name" className="form-input" placeholder="João da Silva"
@@ -696,6 +779,7 @@ export default function LembrymedLanding() {
                     name: form.name.trim(),
                     email: form.email.trim(),
                     phone: form.phone.trim(),
+                    plan,
                     consentAccepted: true,
                     consentVersion: 'v1.0-2026-04-22',
                   }),
@@ -713,7 +797,7 @@ export default function LembrymedLanding() {
               }
             }}
           >
-            {loading ? "Aguarde..." : "Pagar com cartão ou Pix →"}
+            {loading ? "Aguarde..." : plan === "GOLD" ? "Pagar Ouro — R$ 239/ano com cartão ou Pix →" : "Pagar Prata — R$ 149/ano com cartão ou Pix →"}
           </button>
           <div style={{textAlign:"center",fontSize:11,color:"var(--hint)",marginTop:12}}>
             🔒 Pagamento 100% seguro via Stripe

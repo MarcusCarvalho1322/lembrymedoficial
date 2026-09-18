@@ -85,6 +85,8 @@ export const subscriptions = pgTable('subscriptions', {
   stripeSubscriptionId: varchar('stripe_subscription_id', { length: 255 }),
   stripePaymentIntentId: varchar('stripe_payment_intent_id', { length: 255 }),
   plan: varchar('plan', { length: 50 }).default('annual'),
+  /** Nível comercial: SILVER (Prata) | GOLD (Ouro). Define direito ao alerta familiar. */
+  planTier: text('plan_tier').default('SILVER'),
   amountCents: integer('amount_cents').notNull(),
   status: subscriptionStatusEnum('status').default('active'),
   startsAt: timestamp('starts_at', { withTimezone: true }).notNull(),

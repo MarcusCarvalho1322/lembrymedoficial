@@ -66,6 +66,16 @@ const envSchema = z.object({
     .regex(/^(sk|rk)_(live|test)_/, 'deve começar com sk_live_/sk_test_/rk_live_/rk_test_'),
   STRIPE_WEBHOOK_SECRET: z.string().trim().startsWith('whsec_'),
   STRIPE_PRICE_ANNUAL: z.string().trim().startsWith('price_'),
+  /**
+   * Plano Prata (R$ 149/ano) — lembrete individual, sem alerta familiar.
+   * Fallback: STRIPE_PRICE_ANNUAL (retrocompatibilidade com plano único).
+   */
+  STRIPE_PRICE_SILVER: z.string().trim().startsWith('price_').optional(),
+  /**
+   * Plano Ouro (R$ 239/ano) — lembretes + alerta ao cuidador + relatórios.
+   * Obrigatório quando há venda de Ouro; fallback para SILVER se ausente.
+   */
+  STRIPE_PRICE_GOLD: z.string().trim().startsWith('price_').optional(),
 
   // ── LLM Provider (DeepSeek V3 recomendado, Anthropic fallback) ────────────
   /** 'deepseek' (recomendado) | 'anthropic' (fallback) */

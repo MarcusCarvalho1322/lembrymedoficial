@@ -157,20 +157,26 @@ router.post('/webhook/stripe', async (req, res) => {
     const expiresAt = new Date();
     expiresAt.setFullYear(expiresAt.getFullYear() + 1);
 
+    // Plano comercial: metadata.planTier (SILVER | GOLD). Default SILVER.
+    const planTier = (session.metadata?.planTier === 'GOLD') ? 'GOLD' : 'SILVER';
+    const planMeta = session.metadata?.plan || (planTier === 'GOLD' ? 'gold' : 'silver');
+
     await db
       .insert(subscriptions)
       .values({
         patientId,
         stripeCustomerId: session.customer as string,
         stripePaymentIntentId: session.payment_intent as string,
-        amountCents: session.amount_total || 14900,
+        plan: planMeta,
+        planTier,
+        amountCents: session.amount_total || (planTier === 'GOLD' ? 23900 : 14900),
         status: 'active',
         startsAt: new Date(),
         expiresAt,
       })
       .onConflictDoNothing();
 
-    logger.info('Subscription recorded', { patientId });
+    logger.info('Subscription recorded', { patientId, planTier });
   } catch (error: any) {
     logger.error('CRITICAL: Failed to upsert patient/subscription', {
       error: error.message,
@@ -245,20 +251,34 @@ async function handleRenewal(
     const expiresAt = new Date();
     expiresAt.setFullYear(expiresAt.getFullYear() + 1);
 
+    // Renovação preserva o plano atual do paciente (ou reajusta se o
+    // link de renovação veio com plano diferente — ex: upgrade).
+    const existingTier = await db.query.subscriptions.findFirst({
+      where: and(eq(subscriptions.patientId, patientId), eq(subscriptions.status, 'active')),
+    });
+    const planTier =
+      session.metadata?.planTier === 'GOLD'
+        ? 'GOLD'
+        : session.metadata?.planTier === 'SILVER'
+          ? 'SILVER'
+          : (existingTier?.planTier || 'SILVER');
+
     await db
       .insert(subscriptions)
       .values({
         patientId,
         stripeCustomerId:      session.customer as string || '',
         stripePaymentIntentId: session.payment_intent as string || session.id,
-        amountCents:           session.amount_total || 14900,
+        plan:                  planTier === 'GOLD' ? 'gold' : 'silver',
+        planTier,
+        amountCents:           session.amount_total || (planTier === 'GOLD' ? 23900 : 14900),
         status:                'active',
         startsAt:              new Date(),
         expiresAt,
       })
       .onConflictDoNothing(); // Segurança contra webhook duplicado
 
-    logger.info('Nova assinatura criada após renovação', { patientId, expiresAt });
+    logger.info('Nova assinatura criada após renovação', { patientId, expiresAt, planTier });
 
     // 2. Reativar medicamentos que foram desativados pela suspensão
     const reactivated = await db
