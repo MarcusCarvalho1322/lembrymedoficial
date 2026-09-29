@@ -621,7 +621,7 @@ export default function LembrymedLanding() {
           <div className="price-card">
             <div className="price-badge">Plano Prata</div>
             <div className="price-amount">R$ 149</div><div className="price-per">/ano</div>
-            <div className="price-monthly">Equivale a R$ 12,42/mês</div>
+            <div className="price-monthly">Equivale a R$ 12,42/mês · ou em até 12x no cartão</div>
             <div className="price-guarantee">🛡️ 7 dias de garantia incondicional</div>
             <div className="price-features">
               {[
@@ -651,7 +651,7 @@ export default function LembrymedLanding() {
               <span className="old">R$ 339</span>
             </div>
             <div className="price-amount">R$ 239</div><div className="price-per">/ano</div>
-            <div className="price-monthly">Equivale a R$ 19,92/mês</div>
+            <div className="price-monthly">Equivale a R$ 19,92/mês · ou em até 12x no cartão</div>
             <div className="price-guarantee">🛡️ 7 dias de garantia incondicional</div>
             <div className="price-features">
               {[
@@ -675,7 +675,7 @@ export default function LembrymedLanding() {
 
         </div>
         <div style={{textAlign:"center",fontSize:13,color:"var(--hint)",marginTop:20,fontWeight:600}}>
-          🔒 Pagamento seguro via Stripe (cartão, Pix ou boleto) · Dados protegidos pela LGPD
+          🔒 Pagamento seguro via Stripe (cartão em até 12x ou Pix) · Dados protegidos pela LGPD
         </div>
       </div>
     </section>
@@ -797,7 +797,7 @@ export default function LembrymedLanding() {
               }
             }}
           >
-            {loading ? "Aguarde..." : plan === "GOLD" ? "Pagar Ouro — R$ 239/ano com cartão ou Pix →" : "Pagar Prata — R$ 149/ano com cartão ou Pix →"}
+            {loading ? "Aguarde..." : plan === "GOLD" ? "Pagar Ouro — cartão em até 12x ou Pix →" : "Pagar Prata — cartão em até 12x ou Pix →"}
           </button>
           <div style={{textAlign:"center",fontSize:11,color:"var(--hint)",marginTop:12}}>
             🔒 Pagamento 100% seguro via Stripe

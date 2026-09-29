@@ -39,7 +39,13 @@ export async function createPaymentLink(
     success_url: `${env.WEB_URL}/success?renewed=1`,
     cancel_url: `${env.WEB_URL}/?canceled=1`,
     locale: 'pt-BR',
-    payment_method_types: ['card', 'boleto', 'pix'],
+    payment_method_types: ['card', 'pix'],
+    payment_method_options: {
+      card: {
+        // Parcelamento habilitado — planos (até 12x) configurados no painel Stripe
+        installments: { enabled: true },
+      },
+    },
   });
 
   return { url: session.url! };

@@ -59,8 +59,8 @@ export default function TermsPage() {
           3. Pagamento e renovação
         </h2>
         <p>
-          O plano anual custa <strong>R$ 149,00</strong>, cobrado no ato do cadastro via
-          Stripe (cartão, Pix ou boleto). A assinatura <strong>não</strong> é renovada
+          O plano anual custa <strong>R$ 149,00</strong> (Prata) ou <strong>R$ 239,00</strong> (Ouro),
+          cobrado no ato do cadastro via Stripe (cartão em até 12x ou Pix). A assinatura <strong>não</strong> é renovada
           automaticamente — próximo ao vencimento enviamos lembretes e um link para nova
           compra. Em caso de não renovação, seus lembretes são pausados mas seus dados
           permanecem acessíveis por 90 dias.

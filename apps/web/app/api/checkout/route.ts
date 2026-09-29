@@ -109,7 +109,14 @@ export async function POST(req: NextRequest) {
       success_url: `${webUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${webUrl}/checkout?canceled=1`,
       locale: 'pt-BR',
-      payment_method_types: ['card', 'boleto', 'pix'],
+      payment_method_types: ['card', 'pix'],
+      payment_method_options: {
+        card: {
+          // Parcelamento habilitado — planos disponíveis (até 12x) são
+          // configurados no painel Stripe: Settings → Payment methods → Cards
+          installments: { enabled: true },
+        },
+      },
       billing_address_collection: 'required',
       allow_promotion_codes: true,
     });

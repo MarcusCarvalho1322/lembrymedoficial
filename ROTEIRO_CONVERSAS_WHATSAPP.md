@@ -252,7 +252,7 @@
 ## 9. JORNADA COMPLETA EM LINHA DO TEMPO
 
 ```
-DIA 0   ─ 12:34  Maria paga R$ 149 no site (PIX/cartão/boleto)
+DIA 0   ─ 12:34  Maria paga R$ 149 no site (PIX ou cartão em até 12x)
         ─ 12:34  WhatsApp: "Olá, Maria! Seu pagamento foi confirmado..."
         ─ 12:35  Maria: "Tomo losartana 50mg de manhã..."
         ─ 12:36  Bot: "Perfeito! Vou organizar assim..." ✓

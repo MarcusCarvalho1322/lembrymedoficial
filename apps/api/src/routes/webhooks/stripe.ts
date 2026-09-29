@@ -70,12 +70,12 @@ router.post('/webhook/stripe', async (req, res) => {
   // Responder imediatamente ao Stripe (evita retries) — só DEPOIS do dedup
   res.json({ received: true });
 
-  // ── PIX/boleto: sessão expirou sem pagamento ───────────────────────────────
+  // ── PIX: sessão expirou sem pagamento ─────────────────────────────────────
   // PIX tem janela de pagamento limitada. Registrar para acompanhar abandono
   // (útil para entender conversão de PIX vs cartão).
   if (event.type === 'checkout.session.expired' || event.type === 'checkout.session.async_payment_failed') {
     const s = event.data.object as Stripe.Checkout.Session;
-    logger.info('Stripe: sessão de pagamento expirou/falhou (PIX ou boleto)', {
+    logger.info('Stripe: sessão de pagamento expirou/falhou (PIX)', {
       eventType: event.type,
       sessionId: s.id,
       phone: (s.metadata?.phone || '').substring(0, 8) + '****',
