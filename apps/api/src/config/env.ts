@@ -76,6 +76,17 @@ const envSchema = z.object({
    * Obrigatório quando há venda de Ouro; fallback para SILVER se ausente.
    */
   STRIPE_PRICE_GOLD: z.string().trim().startsWith('price_').optional(),
+  /**
+   * 'true' para incluir Pix nos checkouts. Só ative quando a conta Stripe
+   * tiver PIX ativo — enviar 'pix' sem suporte REJEITA a sessão de checkout.
+   */
+  STRIPE_ENABLE_PIX: z.enum(['true', 'false']).default('false'),
+  /**
+   * 'true' para enviar opção de parcelamento no cartão (até 12x).
+   * Recurso em disponibilização gradual no Brasil — só ative quando o
+   * painel da conta exibir a configuração de installment payments.
+   */
+  STRIPE_ENABLE_INSTALLMENTS: z.enum(['true', 'false']).default('false'),
 
   // ── LLM Provider (DeepSeek V3 recomendado, Anthropic fallback) ────────────
   /** 'deepseek' (recomendado) | 'anthropic' (fallback) */

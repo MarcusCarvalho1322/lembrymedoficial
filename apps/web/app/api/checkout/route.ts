@@ -52,6 +52,29 @@ function resolvePriceId(plan: 'SILVER' | 'GOLD'): string {
   return process.env.STRIPE_PRICE_SILVER || process.env.STRIPE_PRICE_ANNUAL!;
 }
 
+/**
+ * Métodos de pagamento ativos na conta.
+ * PIX só é incluído se a conta Stripe tiver PIX ATIVO — enviar 'pix' para uma
+ * conta sem suporte faz o Stripe REJEITAR a criação da sessão de checkout.
+ */
+function resolvePaymentMethods(): Stripe.Checkout.SessionCreateParams.PaymentMethodType[] {
+  const methods: Stripe.Checkout.SessionCreateParams.PaymentMethodType[] = ['card'];
+  if (process.env.STRIPE_ENABLE_PIX === 'true') methods.push('pix');
+  return methods;
+}
+
+/**
+ * Parcelamento no cartão — só é enviado se suportado pela conta.
+ * (Stripe Brasil: recurso em disponibilização gradual; sem suporte,
+ *  enviar o parâmetro quebra a criação da sessão.)
+ */
+function resolvePaymentMethodOptions() {
+  if (process.env.STRIPE_ENABLE_INSTALLMENTS === 'true') {
+    return { card: { installments: { enabled: true } } };
+  }
+  return undefined;
+}
+
 /** Normaliza telefone para formato E.164 brasileiro (55DDDXXXXXXXXX). */
 function formatPhone(phone: string): string {
   const digits = phone.replace(/\D/g, '');
@@ -109,14 +132,10 @@ export async function POST(req: NextRequest) {
       success_url: `${webUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${webUrl}/checkout?canceled=1`,
       locale: 'pt-BR',
-      payment_method_types: ['card', 'pix'],
-      payment_method_options: {
-        card: {
-          // Parcelamento habilitado — planos disponíveis (até 12x) são
-          // configurados no painel Stripe: Settings → Payment methods → Cards
-          installments: { enabled: true },
-        },
-      },
+      payment_method_types: resolvePaymentMethods(),
+      ...(resolvePaymentMethodOptions()
+        ? { payment_method_options: resolvePaymentMethodOptions() }
+        : {}),
       billing_address_collection: 'required',
       allow_promotion_codes: true,
     });

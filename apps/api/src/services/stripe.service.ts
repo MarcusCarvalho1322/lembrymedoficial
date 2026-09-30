@@ -32,6 +32,14 @@ export async function createPaymentLink(
 ): Promise<{ url: string }> {
   const priceId = resolvePriceIdByTier(planTier);
   const tier = planTier === 'GOLD' ? 'GOLD' : 'SILVER';
+
+  // Métodos: cartão sempre; Pix só se ativo na conta (senão o Stripe rejeita)
+  const paymentMethodTypes: Stripe.Checkout.SessionCreateParams.PaymentMethodType[] = ['card'];
+  if (env.STRIPE_ENABLE_PIX === 'true') paymentMethodTypes.push('pix');
+  const paymentMethodOptions = env.STRIPE_ENABLE_INSTALLMENTS === 'true'
+    ? { card: { installments: { enabled: true } } }
+    : undefined;
+
   const session = await stripe.checkout.sessions.create({
     mode: 'payment',
     line_items: [{ price: priceId, quantity: 1 }],
@@ -39,13 +47,8 @@ export async function createPaymentLink(
     success_url: `${env.WEB_URL}/success?renewed=1`,
     cancel_url: `${env.WEB_URL}/?canceled=1`,
     locale: 'pt-BR',
-    payment_method_types: ['card', 'pix'],
-    payment_method_options: {
-      card: {
-        // Parcelamento habilitado — planos (até 12x) configurados no painel Stripe
-        installments: { enabled: true },
-      },
-    },
+    payment_method_types: paymentMethodTypes,
+    ...(paymentMethodOptions ? { payment_method_options: paymentMethodOptions } : {}),
   });
 
   return { url: session.url! };

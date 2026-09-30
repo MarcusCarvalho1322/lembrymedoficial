@@ -99,6 +99,8 @@ services:
       STRIPE_PRICE_ANNUAL: ${STRIPE_PRICE_ANNUAL}
       STRIPE_PRICE_SILVER: ${STRIPE_PRICE_SILVER:-}
       STRIPE_PRICE_GOLD: ${STRIPE_PRICE_GOLD:-}
+      STRIPE_ENABLE_PIX: ${STRIPE_ENABLE_PIX:-false}
+      STRIPE_ENABLE_INSTALLMENTS: ${STRIPE_ENABLE_INSTALLMENTS:-false}
       WEB_URL: ${WEB_URL}
       API_URL: ${API_URL}
       ADMIN_EMAIL: ${ADMIN_EMAIL}
@@ -144,6 +146,8 @@ services:
       STRIPE_PRICE_ANNUAL: ${STRIPE_PRICE_ANNUAL}
       STRIPE_PRICE_SILVER: ${STRIPE_PRICE_SILVER:-}
       STRIPE_PRICE_GOLD: ${STRIPE_PRICE_GOLD:-}
+      STRIPE_ENABLE_PIX: ${STRIPE_ENABLE_PIX:-false}
+      STRIPE_ENABLE_INSTALLMENTS: ${STRIPE_ENABLE_INSTALLMENTS:-false}
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
       interval: 30s
