@@ -19,8 +19,8 @@
   },
   "devDependencies": {
     "next": "^15.5.16",
-    "react": "^18.3.0 || ^19.0.0",
-    "react-dom": "^18.3.0 || ^19.0.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "turbo": "^2.0.0",
     "typescript": "^5.5.0"
   },
