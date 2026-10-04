@@ -28,3 +28,6 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Gerado automaticamente pelo Next.js a cada build
+next-env.d.ts
